@@ -2,27 +2,65 @@ package alexus.studio.animekaiapp
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.View
 import android.webkit.*
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     
     private lateinit var webView: WebView
+    private lateinit var errorLayout: LinearLayout
+    private lateinit var retryButton: Button
+    private lateinit var loadingIndicator: ProgressBar
     
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
         
-        webView = WebView(this)
-        setContentView(webView)
-        
+        initViews()
         setupWebView()
+        loadWebsite()
+    }
+    
+    private fun initViews() {
+        webView = findViewById(R.id.webView)
+        errorLayout = findViewById(R.id.errorLayout)
+        retryButton = findViewById(R.id.retryButton)
+        loadingIndicator = findViewById(R.id.loadingIndicator)
         
-        // Načtení stránky AnimeKai
+        retryButton.setOnClickListener {
+            loadWebsite()
+        }
+    }
+    
+    private fun loadWebsite() {
+        showLoading()
         webView.loadUrl("https://animekai.to/home")
     }
     
+    private fun showLoading() {
+        webView.visibility = View.VISIBLE
+        errorLayout.visibility = View.GONE
+        loadingIndicator.visibility = View.VISIBLE
+    }
+    
+    private fun showError() {
+        webView.visibility = View.GONE
+        errorLayout.visibility = View.VISIBLE
+        loadingIndicator.visibility = View.GONE
+    }
+    
+    private fun showContent() {
+        webView.visibility = View.VISIBLE
+        errorLayout.visibility = View.GONE
+        loadingIndicator.visibility = View.GONE
+    }
+
     private fun setupWebView() {
         // Nastavení WebView
         val webSettings: WebSettings = webView.settings
@@ -50,14 +88,28 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                showLoading()
+            }
+            
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                // Stránka byla načtena
+                showContent()
             }
             
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 super.onReceivedError(view, request, error)
-                Toast.makeText(this@MainActivity, "Chyba při načítání stránky", Toast.LENGTH_SHORT).show()
+                if (request?.isForMainFrame == true) {
+                    showError()
+                }
+            }
+            
+            override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                if (request?.isForMainFrame == true && errorResponse?.statusCode != 200) {
+                    showError()
+                }
             }
         }
         
@@ -71,7 +123,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     override fun onBackPressed() {
-        if (webView.canGoBack()) {
+        if (webView.canGoBack() && errorLayout.visibility == View.GONE) {
             webView.goBack()
         } else {
             super.onBackPressed()
