@@ -1,5 +1,5 @@
 # AnimeKai Android App
-![Verze](https://img.shields.io/badge/verze-1.1.0-blue.svg)
+![Verze](https://img.shields.io/badge/version-1.1.0-blue.svg)
 
 A WebView wrapper application for [AnimeKai.to](https://animekai.to/home) - providing a native Android experience for streaming anime content.
 
